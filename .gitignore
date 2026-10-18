@@ -1,0 +1,38 @@
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# Build
+target/
+build/
+*.jar
+*.war
+*.zip
+*.tar.gz
+*.rar
+
+# Database
+*.db
+*.sqlite
+*.h2.db
+
+# Application properties
+application-*.yml
+!application.yml
+!application-dev.yml
+!application-prod.yml
+
+.claude/
+qodana.yaml
+docs/

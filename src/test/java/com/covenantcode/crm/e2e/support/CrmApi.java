@@ -38,8 +38,7 @@ public class CrmApi {
                 .setConfig(RestAssuredConfig.config()
                         .logConfig(LogConfig.logConfig()
                                 .enableLoggingOfRequestAndResponseIfValidationFails()))
-                .build()
-                .filter(new io.restassured.filter.log.ErrorLoggingFilter());
+                .build();
     }
 
     /** Запрос от имени пользователя с данным JWT. */

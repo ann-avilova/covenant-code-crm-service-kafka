@@ -39,7 +39,6 @@ public abstract class BaseE2ETest extends BaseIntegrationTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-
     protected CrmApi api;
 
     @BeforeEach
@@ -48,8 +47,16 @@ public abstract class BaseE2ETest extends BaseIntegrationTest {
                 INSERT INTO roles (name) VALUES ('ADMIN'), ('MANAGER'), ('TEACHER'), ('STUDENT')
                 ON CONFLICT (name) DO NOTHING
                 """);
-        // ВРЕМЕННО: старый вызов, чтобы увидеть конфликт с админом из V9. Потом вернуть seedAdmin();
-        createUserInDb("Admin", "System", ADMIN_EMAIL, ADMIN_PASSWORD, "ADMIN");
+        // ОШИБКА (оставлено для учёбы): обычный INSERT админа падает в первом тесте JVM с
+        //   DuplicateKeyException: duplicate key value violates unique constraint "users_email_key"
+        //   Подробности: Key (email)=(admin@covenantcode.ru) already exists.
+        // Причина: миграция V9 уже создала этого админа, а email в таблице users уникальный (V3).
+        // После первого теста cleanDatabase() всё стирает, поэтому остальные тесты проходят —
+        // ошибка "плавающая" и зависит от того, какой тест запустился первым.
+//        createUserInDb("Admin", "System", ADMIN_EMAIL, ADMIN_PASSWORD, "ADMIN");
+
+        // РЕШЕНИЕ: upsert (INSERT ... ON CONFLICT (email) DO UPDATE) — работает и когда админ есть, и когда его нет.
+        seedAdmin();
         api = new CrmApi(port);
     }
 
