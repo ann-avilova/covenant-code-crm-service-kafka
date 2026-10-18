@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: crm-postgres-dev
+    environment:
+      POSTGRES_DB: crm_dev
+      POSTGRES_USER: crm_user
+      POSTGRES_PASSWORD: crm_dev_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm_user -d crm_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crm-dev-network
+
+  crm-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crm-service-dev
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: postgres
+      DB_PORT: 5432
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - crm-dev-network
+
+networks:
+  crm-dev-network:
+    driver: bridge
+
+volumes:
+  postgres_dev_data:

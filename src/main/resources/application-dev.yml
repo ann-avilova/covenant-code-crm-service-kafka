@@ -1,0 +1,37 @@
+spring:
+  datasource:
+    # DB_HOST переопределяется в docker-compose (postgres), для IntelliJ — localhost
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/crm_dev
+    username: crm_user
+    password: crm_dev_password
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        default_schema: public
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+jwt:
+  secret: dev-only-secret-key-not-for-production-minimum-32chars
+  expiration: 86400000
+  refresh-expiration: 604800000
+
+logging:
+  level:
+    com.covenantcode.crm: DEBUG
+    org.springframework.security: DEBUG
+    org.flywaydb: INFO
+    org.hibernate.SQL: DEBUG
