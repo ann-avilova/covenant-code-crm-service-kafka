@@ -114,7 +114,7 @@ public class AuthE2ETest extends BaseE2ETest {
         // Given: Создаем пользователя, и получаем список по его токену
         String email = "test@gmail.com";
         var manager = api.registerManager(email, "12345678");
-        api.as(manager.token())//в скобках токен менеджера. Как его достать: имя переменной manager, точка, имя поля из record и пустые скобки (). Поля в record читаются как методы;
+        api.as(manager.token())
                 .get("/leads")
                 .then()
                 .statusCode(200);
