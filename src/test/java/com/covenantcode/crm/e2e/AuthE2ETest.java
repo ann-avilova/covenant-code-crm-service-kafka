@@ -1,5 +1,6 @@
 package com.covenantcode.crm.e2e;
 
+import com.covenantcode.crm.dto.auth.LoginRequest;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.util.Map;
@@ -85,11 +86,17 @@ public class AuthE2ETest extends BaseE2ETest {
     @Test
     @DisplayName("Логин с неверны паролем -> 401")
     void request_wrongPassword_returns401() {
+
+        //Создаем существующий DTO из папки main.dto.auth
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setEmail(ADMIN_EMAIL);
+        loginRequest.setPassword("wrong-password");
+
         // Given: админ существует (BaseE2ETest.seedAdmin()), но пароль неверный
 
         //When: попытка логина с неверным паролем
         api.anonymous()
-                .body(Map.of("email", ADMIN_EMAIL, "password", "wrong-password"))
+                .body(loginRequest)
                 .post("/auth/login")
                 //Then: 401
                 .then()
@@ -97,4 +104,6 @@ public class AuthE2ETest extends BaseE2ETest {
                 .body("detail", equalTo("Неверный email или пароль"))
                 .body("token", nullValue());
     }
+
+
 }
