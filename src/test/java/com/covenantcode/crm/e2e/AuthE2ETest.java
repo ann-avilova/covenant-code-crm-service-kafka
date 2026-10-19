@@ -1,9 +1,11 @@
 package com.covenantcode.crm.e2e;
 
 import com.covenantcode.crm.dto.auth.LoginRequest;
+import com.covenantcode.crm.e2e.support.CrmApi;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.util.Map;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -105,5 +107,25 @@ public class AuthE2ETest extends BaseE2ETest {
                 .body("token", nullValue());
     }
 
+    @Disabled("BUG: в классе JwtService метод isTokenValid проверяет только email и срок токена, но не проверяет, заблокирован ли пользователь")
+    @Test
+    @DisplayName("Получение списка лидов повторно после блокировки менеджера -> 401")
+    void createdManagerAndGetLeads200_blockedManager_GetLeads401() {
+        // Given: Создаем пользователя, и получаем список по его токену
+        String email = "test@gmail.com";
+        var manager = api.registerManager(email, "12345678");
+        api.as(manager.token())//в скобках токен менеджера. Как его достать: имя переменной manager, точка, имя поля из record и пустые скобки (). Поля в record читаются как методы;
+                .get("/leads")
+                .then()
+                .statusCode(200);
 
+        // When: Админ блокирует пользователя
+        api.setUserEnabled(adminToken(), manager.id(), false);
+
+        // Then: Пользователь после блокировки пытается получить список лидов
+        api.as(manager.token())
+                .get("/leads")
+                .then()
+                .statusCode(401);
+    }
 }

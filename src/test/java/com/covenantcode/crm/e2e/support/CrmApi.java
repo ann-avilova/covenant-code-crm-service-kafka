@@ -41,7 +41,7 @@ public class CrmApi {
                 .build();
     }
 
-    /** Запрос от имени пользователя с данным JWT. */
+    /** Запрос от имени пользователя с данным JWT.*/
     public RequestSpecification as(String token) {
         return given()
                 .spec(baseSpec)
@@ -64,9 +64,9 @@ public class CrmApi {
                 .extract().path("token");
     }
 
-    /** Публичная регистрация. По текущей логике всегда создаёт MANAGER. */
-    public String registerManager(String email, String password) {
-        return anonymous()
+    /** Публичная регистрация. По текущей логике всегда создаёт MANAGER. Метод возвращает id и токен.*/
+    public RegisteredUser registerManager(String email, String password) {
+        var json = anonymous()
                 .body(Map.of(
                         "firstName", "Мария",
                         "lastName", "Менеджерова",
@@ -75,7 +75,12 @@ public class CrmApi {
                         "phone", "+79990000001"))
                 .post("/auth/register")
                 .then().statusCode(201)
-                .extract().path("token");
+                .extract().jsonPath();
+        return new RegisteredUser(json.getLong("userId"), json.getString("token"));
+    }
+
+    /** Результат регистрации: id нового пользователя и его токен. */
+    public record RegisteredUser(long id, String token) {
     }
 
     // ---------- справочники ----------
@@ -192,5 +197,16 @@ public class CrmApi {
 
     public Map<String, Object> attendance(long studentId, boolean present) {
         return Map.of("studentId", studentId, "present", present);
+    }
+
+    // ---------- пользователи ----------
+
+    /** Блокирует (false) или разблокирует (true) пользователя. Только для ADMIN. */
+    public void setUserEnabled(String adminToken, long userId, boolean enabled) {
+        as(adminToken)
+                .body(Map.of("enabled", enabled))
+                .patch("/users/{id}/enabled", userId)
+                .then()
+                .statusCode(200);
     }
 }
