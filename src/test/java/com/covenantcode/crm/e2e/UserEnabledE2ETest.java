@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.springframework.security.authorization.AuthenticatedAuthorizationManager.anonymous;
 
 @DisplayName("Блокировка и разблокировка пользователей")
 public class UserEnabledE2ETest extends BaseE2ETest {
@@ -15,7 +16,7 @@ public class UserEnabledE2ETest extends BaseE2ETest {
     private Faker faker;
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
         this.faker = new Faker();
     }
 
@@ -33,7 +34,7 @@ public class UserEnabledE2ETest extends BaseE2ETest {
         api.as(adminToken)
                 .body(Map.of("enabled", false))
                 .patch("/users/{id}/enabled", manager.id())
-        //Then:
+                //Then:
                 .then()
                 .statusCode(200);
         api.as(adminToken)
@@ -43,29 +44,50 @@ public class UserEnabledE2ETest extends BaseE2ETest {
                 .body("enabled", equalTo(false));
     }
 
-    @Disabled("Тест не проходит, У пользователя есть доступ после блокировки")
+    @Disabled("BUG №5: Старый токен продолжает работать после блокировки")
     @Test
     @DisplayName("Состояние: Разблокирован -> Заблокирован (Отзыв прав)")
-    void blockedUser_admin_userUnAuthorized401(){
+    void blockedUser_admin_userUnAuthorized401() {
         // Given:
         String email = faker.internet().emailAddress();
         String password = faker.internet().password(8, 16);
 
         var manager = api.registerManager(email, password);
-        String managerToken = api.login("test@jf.com", "123456789");
+        String managerToken = api.login(email, password);
         String adminToken = adminToken();
         // When:
         api.as(adminToken)
                 .body(Map.of("enabled", false))
                 .patch("/users/{id}/enabled", manager.id())
-        // Then:
+                // Then:
                 .then()
                 .statusCode(200);
         api.as(managerToken)
                 .get("/users/{id}", manager.id())
                 .then()
-                .statusCode(401)
-                .body("message", equalTo("Не авторизован - отсутствует или невалидный JWT токен"));
+                .statusCode(401);
+    }
+
+    @Test
+    @DisplayName("Состояние: Разблокирован -> Заблокирован (проверка через вход)")
+    void blockedUser_admin_unAuthorizedUser401(){
+        //Given:
+        String email = faker.internet().emailAddress();
+        String password = faker.internet().password(8, 16);
+        var manager = api.registerManager(email, password);
+        String adminToken = adminToken();
+        //When:
+        api.as(adminToken)
+                .body(Map.of("enabled", false))
+                .patch("/users/{id}/enabled", manager.id())
+                .then()
+                .statusCode(200);
+        //Then:
+        api.anonymous()
+                .body(Map.of("email", email, "password", password))
+                .post("/auth/login")
+                .then()
+                .statusCode(401);
     }
 
     @Test
@@ -82,7 +104,7 @@ public class UserEnabledE2ETest extends BaseE2ETest {
         api.as(adminToken)
                 .body(Map.of("enabled", true))
                 .patch("/users/{id}/enabled", manager.id())
-        // Then:
+                // Then:
                 .then()
                 .statusCode(200)
                 .body("enabled", equalTo(true));
@@ -106,7 +128,7 @@ public class UserEnabledE2ETest extends BaseE2ETest {
         api.as(adminToken)
                 .body(Map.of("enabled", true))
                 .patch("/users/{id}/enabled", manager.id())
-        // Then:
+                // Then:
                 .then()
                 .statusCode(200)
                 .body("enabled", equalTo(true));
