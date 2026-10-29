@@ -4,6 +4,7 @@ import com.covenantcode.crm.dto.user.UserResponse;
 import com.covenantcode.crm.entity.Role;
 import com.covenantcode.crm.entity.User;
 import com.covenantcode.crm.entity.enums.RoleName;
+import com.covenantcode.crm.event.UserStatusChangedEvent;
 import com.covenantcode.crm.exception.BadRequestException;
 import com.covenantcode.crm.exception.ForbiddenException;
 import com.covenantcode.crm.exception.ResourceNotFoundException;
@@ -24,6 +25,7 @@ import org.springframework.data.jpa.domain.Specification;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.kafka.core.KafkaTemplate;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -40,6 +42,9 @@ public class UserServiceImplTest {
 
     @Mock
     private UserMapper userMapper;
+
+    @Mock
+    private KafkaTemplate<String, UserStatusChangedEvent> kafkaTemplate;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -273,6 +278,30 @@ public class UserServiceImplTest {
         assertThatCode(() -> userService.updateEnabled(targetUserId, enabledStatus, adminId))
                 .doesNotThrowAnyException();
         verify(userRepository, times(1)).save(any(User.class));
+    }
+
+    @Test
+    void updateEnabled_whenAdminBlocksAnotherUser_sendsEventToKafka(){
+        // Given:
+        Long adminId = 1L;
+        Long targetUserId = 2L;
+        boolean enabledStatus = false;
+
+        User targetUser = new User();
+        targetUser.setId(targetUserId);
+        targetUser.setEnabled(true);
+
+        when(userRepository.findById(targetUserId)).thenReturn(Optional.of(targetUser));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation ->
+           invocation.getArgument(0));
+
+        // When:
+        userService.updateEnabled(targetUserId, enabledStatus, adminId);
+
+
+        // Then:
+        verify(kafkaTemplate, times(1)).
+                send(eq("user.status-changed"),eq("2"), any(UserStatusChangedEvent.class));
     }
 
     @Test

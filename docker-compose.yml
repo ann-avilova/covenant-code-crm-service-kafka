@@ -35,6 +35,12 @@ services:
     networks:
       - crm-dev-network
 
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+
 networks:
   crm-dev-network:
     driver: bridge

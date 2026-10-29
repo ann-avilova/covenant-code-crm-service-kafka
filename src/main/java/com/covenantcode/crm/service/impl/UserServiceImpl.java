@@ -3,6 +3,7 @@ package com.covenantcode.crm.service.impl;
 import com.covenantcode.crm.dto.user.UserResponse;
 import com.covenantcode.crm.entity.User;
 import com.covenantcode.crm.entity.enums.RoleName;
+import com.covenantcode.crm.event.UserStatusChangedEvent;
 import com.covenantcode.crm.exception.BadRequestException;
 import com.covenantcode.crm.exception.ForbiddenException;
 import com.covenantcode.crm.exception.ResourceNotFoundException;
@@ -10,10 +11,13 @@ import com.covenantcode.crm.mapper.UserMapper;
 import com.covenantcode.crm.repository.UserRepository;
 import com.covenantcode.crm.repository.UserSpecifications;
 import com.covenantcode.crm.service.UserService;
+import java.time.Instant;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -24,6 +28,7 @@ import org.springframework.util.StringUtils;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final KafkaTemplate<String, UserStatusChangedEvent> kafkaTemplate;
 
     @Override
     public Page<UserResponse> getAll(Pageable pageable, String search) {
@@ -66,6 +71,10 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
         user.setEnabled(enabled);
         User savedUser = userRepository.save(user);
+        UserStatusChangedEvent userStatusChangedEvent =
+                new UserStatusChangedEvent(UUID.randomUUID(), savedUser.getId(), savedUser.getEmail(), enabled, Instant.now());
+        kafkaTemplate.send("user.status-changed", savedUser.getId().toString(), userStatusChangedEvent);
         return userMapper.toResponse(savedUser);
     }
+
 }
