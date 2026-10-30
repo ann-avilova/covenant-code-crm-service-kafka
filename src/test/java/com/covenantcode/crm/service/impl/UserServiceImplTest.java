@@ -13,6 +13,7 @@ import com.covenantcode.crm.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -260,7 +261,8 @@ public class UserServiceImplTest {
     }
 
     @Test
-    public void updateEnabled_whenAdminBlocksAnotherUser(){
+    public void updateEnabled_whenAdminBlocksAnotherUser() {
+        //Given
         Long adminId = 1L;
         Long targetUserId = 2L;
         boolean enabledStatus = false;
@@ -270,42 +272,69 @@ public class UserServiceImplTest {
         targetUser.setEnabled(true);
 
         when(userRepository.findById(targetUserId)).thenReturn(Optional.of(targetUser));
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
-            User userToSave = invocation.getArgument(0);
-            userToSave.setEnabled(enabledStatus);
-            return userToSave;
-        });
+        // Заглушка save только возвращает того же пользователя и НЕ меняет enabled.
+        // Статус должен поменять сам сервис (user.setEnabled).
+        // Если менять enabled здесь, тест останется зелёным, даже когда сервис сломан.
+        when(userRepository.save(any(User.class))).thenAnswer(invocation ->
+            invocation.getArgument(0));
+
         assertThatCode(() -> userService.updateEnabled(targetUserId, enabledStatus, adminId))
                 .doesNotThrowAnyException();
-        verify(userRepository, times(1)).save(any(User.class));
+
+        //1. Создание <ловушки> для объектов нужного класса
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+
+        //2.
+        verify(userRepository, times(1)).
+                save(captor.capture());
+
+        //3. Достань пойманный объект
+        User saveUser = captor.getValue();
+
+        assertThat(saveUser.getId()).isEqualTo(targetUserId);
+        assertThat(saveUser.isEnabled()).isEqualTo(enabledStatus);
     }
 
     @Test
-    void updateEnabled_whenAdminBlocksAnotherUser_sendsEventToKafka(){
+    void updateEnabled_whenAdminBlocksAnotherUser_sendsEventToKafka() {
         // Given:
         Long adminId = 1L;
         Long targetUserId = 2L;
+        String targetUserEmail = "mir@gmail.com";
         boolean enabledStatus = false;
 
         User targetUser = new User();
         targetUser.setId(targetUserId);
         targetUser.setEnabled(true);
+        targetUser.setEmail(targetUserEmail);
 
         when(userRepository.findById(targetUserId)).thenReturn(Optional.of(targetUser));
         when(userRepository.save(any(User.class))).thenAnswer(invocation ->
-           invocation.getArgument(0));
+                invocation.getArgument(0));
 
         // When:
         userService.updateEnabled(targetUserId, enabledStatus, adminId);
 
-
         // Then:
+        //1. Создание <ловушки> для объектов нужного класса
+        ArgumentCaptor<UserStatusChangedEvent> captor = ArgumentCaptor.forClass(UserStatusChangedEvent.class);
+
+        //2.
         verify(kafkaTemplate, times(1)).
-                send(eq("user.status-changed"),eq("2"), any(UserStatusChangedEvent.class));
+                send(eq("user.status-changed"), eq("2"), captor.capture());
+
+        //3. Достань пойманный объект
+        UserStatusChangedEvent event = captor.getValue();
+
+        assertThat(event.eventId()).isNotNull();
+        assertThat(event.changedAt()).isNotNull();
+        assertThat(event.email()).isEqualTo(targetUserEmail);
+        assertThat(event.userId()).isEqualTo(targetUserId);
+        assertThat(event.enabled()).isEqualTo(enabledStatus);
     }
 
     @Test
-    public void updateEnabled_whenUserBlocksHimself(){
+    public void updateEnabled_whenUserBlocksHimself() {
         Long adminId = 1L;
         boolean enabledStatus = false;
 
@@ -317,7 +346,7 @@ public class UserServiceImplTest {
     }
 
     @Test
-    public void updateEnabled_whenUserNotFound(){
+    public void updateEnabled_whenUserNotFound() {
         Long nonExistentUserId = 999L;
         boolean enabledStatus = false;
         Long currentUserId = 1L;
@@ -330,7 +359,7 @@ public class UserServiceImplTest {
     }
 
     @Test
-    public void updateEnabled_whenUserAlreadyActive(){
+    public void updateEnabled_whenUserAlreadyActive() {
         Long adminId = 1L;
         Long targetUserId = 2L;
         boolean enabledStatus = true;
