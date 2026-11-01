@@ -201,6 +201,13 @@
             <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>net.datafaker</groupId>
+            <artifactId>datafaker</artifactId>
+            <version>2.4.0</version>
+            <scope>test</scope>
+        </dependency>
+     
 
 
         <!-- E2E: HTTP-клиент для сквозных тестов, версия управляется spring-boot-starter-parent -->

@@ -5,6 +5,8 @@ import com.covenantcode.crm.e2e.support.CrmApi;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.util.Map;
+import net.datafaker.Faker;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,6 +21,15 @@ import static org.hamcrest.Matchers.nullValue;
 
 @DisplayName("E2E: аутентификация и JWT")
 public class AuthE2ETest extends BaseE2ETest {
+
+    private Faker faker;
+
+    @BeforeEach
+    void setUp(){
+        faker = new Faker();
+    }
+
+
     @Test
     @DisplayName("Админ логинется и с полученым токеном получает доступ к защищенному эндпойнту")
     void login_validCredentials_tokenGrantAccess() {
@@ -112,8 +123,9 @@ public class AuthE2ETest extends BaseE2ETest {
     @DisplayName("Получение списка лидов повторно после блокировки менеджера -> 401")
     void createdManagerAndGetLeads200_blockedManager_GetLeads401() {
         // Given: Создаем пользователя, и получаем список по его токену
-        String email = "test@gmail.com";
-        var manager = api.registerManager(email, "12345678");
+        String randomEmail = faker.internet().emailAddress();
+        String password = "123456789";
+        var manager = api.registerManager(randomEmail, password);
         api.as(manager.token())
                 .get("/leads")
                 .then()
