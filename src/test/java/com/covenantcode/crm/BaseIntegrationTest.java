@@ -9,6 +9,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.kafka.KafkaContainer;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -34,6 +35,18 @@ public abstract class BaseIntegrationTest {
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
     }
+
+    static final KafkaContainer kafka = new KafkaContainer("apache/kafka:3.8.0");
+
+    static {
+        kafka.start();  // стартует один раз на весь JVM-процесс
+    }
+
+    @DynamicPropertySource
+    static void configureKafka(DynamicPropertyRegistry registry) {
+        registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
+    }
+
 
     @Autowired
     private JdbcTemplate jdbcTemplate;

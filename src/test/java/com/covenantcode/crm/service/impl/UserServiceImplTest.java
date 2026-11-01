@@ -4,7 +4,7 @@ import com.covenantcode.crm.dto.user.UserResponse;
 import com.covenantcode.crm.entity.Role;
 import com.covenantcode.crm.entity.User;
 import com.covenantcode.crm.entity.enums.RoleName;
-import com.covenantcode.crm.event.UserStatusChangedEvent;
+import com.covenantcode.crm.kafka.UserStatusChangedEvent;
 import com.covenantcode.crm.exception.BadRequestException;
 import com.covenantcode.crm.exception.ForbiddenException;
 import com.covenantcode.crm.exception.ResourceNotFoundException;

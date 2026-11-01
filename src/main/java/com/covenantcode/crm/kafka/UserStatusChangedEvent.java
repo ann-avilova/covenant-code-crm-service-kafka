@@ -1,4 +1,4 @@
-package com.covenantcode.crm.event;
+package com.covenantcode.crm.kafka;
 
 import java.time.Instant;
 import java.util.UUID;
