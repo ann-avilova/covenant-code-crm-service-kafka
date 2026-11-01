@@ -36,3 +36,5 @@ application-*.yml
 .claude/
 qodana.yaml
 docs/
+.allure/
+allure-results/

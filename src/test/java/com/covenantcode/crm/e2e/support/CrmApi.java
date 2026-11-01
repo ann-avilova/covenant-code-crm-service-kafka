@@ -1,5 +1,6 @@
 package com.covenantcode.crm.e2e.support;
 
+import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.config.LogConfig;
 import io.restassured.config.RestAssuredConfig;
@@ -38,6 +39,7 @@ public class CrmApi {
                 .setConfig(RestAssuredConfig.config()
                         .logConfig(LogConfig.logConfig()
                                 .enableLoggingOfRequestAndResponseIfValidationFails()))
+                .addFilter(new AllureRestAssured())//в отчете появились данные(пароли, токены, email...)
                 .build();
     }
 
