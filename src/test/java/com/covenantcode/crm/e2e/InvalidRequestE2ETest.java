@@ -19,7 +19,25 @@ public class InvalidRequestE2ETest extends BaseE2ETest {
         api.as(adminToken)
                 .get("/courses/{id}", invalidId)
 
-        //Then:
+                //Then:
+                .then()
+                .statusCode(400);
+    }
+
+    @Disabled("BUG #2: При выполнении запроса GET /leads?status=FOO (несуществующий статус) возвращается 500 вместо 400")
+    @DisplayName("В запрос GET /leads передан неверный status(FOO) -> 400")
+    @Test
+    void invalidStatusRequestLeads_returns400() {
+        //Given:
+        String adminToken = adminToken();
+        String invalidStatus = "FOO";
+
+        //When:
+        api.as(adminToken)
+                .queryParam("status", invalidStatus)
+                .get("/leads")
+
+                //Then:
                 .then()
                 .statusCode(400);
     }
