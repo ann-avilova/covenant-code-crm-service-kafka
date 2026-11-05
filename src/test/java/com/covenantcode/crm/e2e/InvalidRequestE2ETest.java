@@ -41,4 +41,20 @@ public class InvalidRequestE2ETest extends BaseE2ETest {
                 .then()
                 .statusCode(400);
     }
+
+    @Disabled("BUG #4: При выполнении запроса GET /unknown/path (несуществующий адрес) возвращается 500 вместо 404")
+    @DisplayName("Запрос GET /unknown/path (несуществующий адрес) -> 404")
+    @Test
+    void nonexistentUrlInRequest_returns404() {
+        //Given:
+        String adminToken = adminToken();
+
+        //When:
+        api.as(adminToken)
+                .get("/unknown/path")
+
+                //Then:
+                .then()
+                .statusCode(404);
+    }
 }
