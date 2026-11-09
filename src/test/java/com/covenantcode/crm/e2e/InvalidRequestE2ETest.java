@@ -3,21 +3,23 @@ package com.covenantcode.crm.e2e;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 @DisplayName("Неверные запросы")
 public class InvalidRequestE2ETest extends BaseE2ETest {
 
-    @Disabled("BUG #3: При выполнении запроса GET /courses/abc (id не число) возвращается 500 вместо 400")
-    @DisplayName("В запрос передан неверный id (abc) -> 400")
-    @Test
-    void invalidIdRequest_returns400() {
+    @Disabled("BUG #3: При выполнении запроса GET /courses/{id}, где id не целое число, возвращается 500 вместо 400")
+    @DisplayName("В запрос передан неверный id (не целое число) -> 400")
+    @ParameterizedTest(name = "id = {0}")
+    @ValueSource(strings = {"abc", "\"", "1_", "1.2", "99999999999999999999"})
+    void invalidIdRequest_returns400(String id) {
         //Given:
         String adminToken = adminToken();
-        String invalidId = "abc";
 
         //When:
         api.as(adminToken)
-                .get("/courses/{id}", invalidId)
+                .get("/courses/{id}", id)
 
                 //Then:
                 .then()
