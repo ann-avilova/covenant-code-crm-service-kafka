@@ -1,7 +1,7 @@
 package com.covenantcode.crm.e2e;
 
+import com.covenantcode.crm.dto.auth.AuthResponse;
 import com.covenantcode.crm.dto.auth.LoginRequest;
-import com.covenantcode.crm.e2e.support.CrmApi;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.util.Map;
@@ -15,6 +15,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -25,7 +26,7 @@ public class AuthE2ETest extends BaseE2ETest {
     private Faker faker;
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
         faker = new Faker();
     }
 
@@ -44,6 +45,32 @@ public class AuthE2ETest extends BaseE2ETest {
                 .then()
                 .statusCode(200)
                 .body("content", notNullValue());
+    }
+
+    @Test
+    @DisplayName("Админ логинится -> в ответе его email, имя, фамилия, роль, userId и токун")
+    void adminLogin_responseEmailRoleFirstNameAndLastName() {
+        //Given:
+        //admin create in BaseE2ETest.seedAdmin()
+        //When:
+        AuthResponse response = api.anonymous()
+                .body(Map.of("email", ADMIN_EMAIL, "password", ADMIN_PASSWORD))
+                .post("/auth/login")
+                .then()
+                .statusCode(200)
+                .extract().as(AuthResponse.class);
+        //Then:
+        assertThat(response.getEmail()).isEqualTo(ADMIN_EMAIL);
+        assertThat(response.getFirstName()).isEqualTo("Admin");
+        assertThat(response.getLastName()).isEqualTo("System");
+        assertThat(response.getRole()).isEqualTo("ADMIN");
+
+        api.as(response.getToken())
+                .get("/users/{id}", response.getUserId())
+                .then()
+                .statusCode(200)
+                .body("email", equalTo(ADMIN_EMAIL));
+
     }
 
     @Test
