@@ -21,6 +21,7 @@ public class InvalidRequestE2ETest extends BaseE2ETest {
 
                 //Then:
                 .then()
+                .spec(ERROR_RESPONSE)
                 .statusCode(400);
     }
 
@@ -39,6 +40,7 @@ public class InvalidRequestE2ETest extends BaseE2ETest {
 
                 //Then:
                 .then()
+                .spec(ERROR_RESPONSE)
                 .statusCode(400);
     }
 
@@ -55,6 +57,7 @@ public class InvalidRequestE2ETest extends BaseE2ETest {
 
                 //Then:
                 .then()
+                .spec(ERROR_RESPONSE)
                 .statusCode(404);
     }
 }

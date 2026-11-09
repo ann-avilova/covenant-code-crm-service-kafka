@@ -2,6 +2,8 @@ package com.covenantcode.crm.e2e;
 
 import com.covenantcode.crm.BaseIntegrationTest;
 import com.covenantcode.crm.e2e.support.CrmApi;
+import io.restassured.builder.ResponseSpecBuilder;
+import io.restassured.specification.ResponseSpecification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +11,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import static org.hamcrest.Matchers.notNullValue;
 
 /**
  * База для сквозных (E2E) тестов.
@@ -30,6 +34,14 @@ public abstract class BaseE2ETest extends BaseIntegrationTest {
 
     protected static final String ADMIN_EMAIL = "admin@covenantcode.ru";
     protected static final String ADMIN_PASSWORD = "Admin1234!";
+
+    // Проверяет, что ответ от ошибок пришел в формате "application/problem+json" и поле detail не null
+    // Спецификация не проверяет статус(он разный у ошибок)
+    // Используется для негативного тестирования
+    protected static final ResponseSpecification ERROR_RESPONSE = new ResponseSpecBuilder()
+            .expectBody("detail", notNullValue())
+            .expectContentType("application/problem+json")
+            .build();
 
     @LocalServerPort
     private int port;

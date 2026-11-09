@@ -87,6 +87,7 @@ public class UserEnabledE2ETest extends BaseE2ETest {
                 .body(Map.of("email", email, "password", password))
                 .post("/auth/login")
                 .then()
+                .spec(ERROR_RESPONSE)
                 .statusCode(401);
     }
 
