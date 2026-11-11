@@ -9,10 +9,10 @@ import org.junit.jupiter.params.provider.ValueSource;
 @DisplayName("Неверные запросы")
 public class InvalidRequestE2ETest extends BaseE2ETest {
 
-    @Disabled("BUG #3: При выполнении запроса GET /courses/{id}, где id не целое число, возвращается 500 вместо 400")
-    @DisplayName("В запрос передан неверный id (не целое число) -> 400")
+    @Disabled("BUG #3: При выполнении запроса GET /courses/{id}, где id нельзя перевести в Long, возвращается 500 вместо 400")
+    @DisplayName("В запрос передан неверный id (нельзя перевести в Long) -> 400")
     @ParameterizedTest(name = "id = {0}")
-    @ValueSource(strings = {"abc", "\"", "1_", "1.2", "99999999999999999999"})
+    @ValueSource(strings = {"abc", "\"", "1_", "1.2", "99999999999999999999", "9223372036854775808"})
     void invalidIdRequest_returns400(String id) {
         //Given:
         String adminToken = adminToken();

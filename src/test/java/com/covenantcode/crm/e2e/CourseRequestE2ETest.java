@@ -48,4 +48,21 @@ public class CourseRequestE2ETest extends BaseE2ETest {
         var actualId = response.jsonPath().getLong("id");
         assertEquals(courseId , actualId);
     }
+
+    @DisplayName("Админ пытается получить курс по id (максимальное значение Long) -> 404")
+    @Test
+    void adminGetCourseByMaxLongId_returns404(){
+        //Given:
+        String adminToken = adminToken();
+        var courseId = "9223372036854775807";
+
+        //When:
+        api.as(adminToken)
+                .get("/courses/{id}", courseId)
+        //Then:
+                .then()
+                .spec(ERROR_RESPONSE)
+                .statusCode(404)
+                .body("type", equalTo("resource-not-found"));
+    }
 }
