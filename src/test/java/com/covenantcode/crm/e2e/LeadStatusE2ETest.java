@@ -40,5 +40,30 @@ public class LeadStatusE2ETest extends BaseE2ETest {
                 .body("status", equalTo("NEW"));
 
     }
+
+    @DisplayName("При выполнении запроса PATCH /leads/{id}/status -> 200, статус изменился на IN_PROGRESS; повторный GET /leads/{id} подтверждает, что статус сохранился в базе")
+    @Test
+    void statusChangedToInProgress_isSaved() {
+        //Given:
+        String email = faker.internet().emailAddress();
+        var manager = api.registerManager(email, "123456789");
+        var managerToken = manager.token();
+        var leadId = api.createLead(managerToken, "Anna", null);
+
+        //When:
+        api.as(managerToken)
+                .body(Map.of("status", "IN_PROGRESS"))
+                .patch("/leads/{id}/status", leadId)
+                //Then:
+                .then()
+                .statusCode(200)
+                .body("status", equalTo("IN_PROGRESS"));
+        api.as(managerToken)
+                .get("/leads/{id}", leadId)
+                .then()
+                .statusCode(200)
+                .body("status", equalTo("IN_PROGRESS"));
+
+    }
 }
 
