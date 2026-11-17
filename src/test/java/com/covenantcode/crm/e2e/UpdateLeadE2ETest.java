@@ -66,4 +66,35 @@ public class UpdateLeadE2ETest extends BaseE2ETest {
                 .statusCode(200)
                 .body("phone", equalTo("+79991113344"));
     }
+
+    @Test
+    @DisplayName("PUT /leads/{id} после конвертации лида в студента -> 400; данные лида не изменились")
+    void updateLead_afterConvertInStudent_returns400() {
+        //Given:
+        String name = faker.name().firstName();
+        String phone1 = "+79991112211";
+        String adminToken = adminToken();
+
+        var leadId = api.createLead(adminToken, name, null);
+        api.convertLead(adminToken, leadId, name);
+
+
+        Map<String, Object> form = new HashMap<>();
+        form.put("firstName", name);
+        form.put("phone", phone1);
+
+        //When:
+        api.as(adminToken)
+                .body(form)
+                .put("/leads/{id}", leadId)
+                //Then:
+                .then()
+                .statusCode(400)
+                .body("type", equalTo("bad-request"));
+        api.as(adminToken)
+                .get("/leads/{id}", leadId)
+                .then()
+                .statusCode(200)
+                .body("phone", equalTo("+79991112233"));
+    }
 }
